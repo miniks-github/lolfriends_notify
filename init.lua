@@ -7,16 +7,16 @@ local inspect = require("inspect")
 local lol_api_url = "https://euw1.api.riotgames.com"
 local summoner_api_url = lol_api_url .. "/lol/summoner/v4/summoners/by-name/"
 local spectator_api_url = lol_api_url .. "/lol/spectator/v4/active-games/by-summoner/"
-local api_key = require("lolfriends.secrets")
+local secrets = require("lolfriends.secrets")
 
 local M = {}
 
 local get_summoner_api_url = function(summoner_name)
-	return summoner_api_url .. summoner_name .. "?api_key=" .. api_key
+	return summoner_api_url .. summoner_name .. "?api_key=" .. secrets.api_key
 end
 
 local get_spectator_api_url = function(summoner_id)
-	return spectator_api_url .. summoner_id .. "?api_key=" .. api_key
+	return spectator_api_url .. summoner_id .. "?api_key=" .. secrets.api_key
 end
 
 local get_summoner_id_by_summoner_name = function(summoner_name)
@@ -25,9 +25,9 @@ local get_summoner_id_by_summoner_name = function(summoner_name)
 	return lunajson.decode(body)
 end
 
-local get_all_summoner_ids = function(opts)
+local get_all_summoner_ids = function()
 	local _summoner_ids = {}
-	for _, summoner_name in pairs(opts["friendlist"]) do
+	for _, summoner_name in pairs(secrets.friendlist) do
 		local response = get_summoner_id_by_summoner_name(summoner_name:gsub(" ", "%%20"))
 		table.insert(_summoner_ids, response["id"])
 	end
@@ -55,23 +55,14 @@ local init_game_tracking = function(friendlist)
 	return is_ingame_list
 end
 
---[[
--- opts = {
---      friendlist = {
---          "Summoner1",
---          "Summoner2",
---          "Summoner3"
---      }
--- }
---]]
-M.setup = function(opts)
-	local summoner_ids = get_all_summoner_ids(opts)
-	local tracking_list = init_game_tracking(opts["friendlist"])
+M.setup = function()
+	local summoner_ids = get_all_summoner_ids()
+	local tracking_list = init_game_tracking(secrets.friendlist)
 	local continue_timer = true
 	gears.timer.start_new(12, function()
 		for key, summoner_id in pairs(summoner_ids) do
 			local headers, _ = assert(http.new_from_uri(get_spectator_api_url(summoner_id)):go())
-			continue_timer = track_summoner_game(headers:get(":status"), opts["friendlist"][key], tracking_list)
+			continue_timer = track_summoner_game(headers:get(":status"), secrets.friendlist[key], tracking_list)
 		end
 		return continue_timer
 	end)
