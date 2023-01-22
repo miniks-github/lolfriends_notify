@@ -7,7 +7,7 @@ local inspect = require("inspect")
 local lol_api_url = "https://euw1.api.riotgames.com"
 local summoner_api_url = lol_api_url .. "/lol/summoner/v4/summoners/by-name/"
 local spectator_api_url = lol_api_url .. "/lol/spectator/v4/active-games/by-summoner/"
-local secrets = require("lolfriends.secrets")
+local secrets = require("lolfriends_notify.secrets")
 
 local M = {}
 
